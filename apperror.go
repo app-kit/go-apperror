@@ -7,10 +7,11 @@ import (
 
 type AppError struct {
 	Code    string      `json:"code,omitempty"`
+	Status  int         `json:"status,omitempty"`
 	Message string      `json:"title,omitempty"`
 	Data    interface{} `json:"data"`
+	Errors  []error     `json:"errors,omitempty"`
 	Public  bool        `json:"-"`
-	Errors  []error
 }
 
 // Ensure error implements the error interface.
@@ -18,6 +19,10 @@ var _ Error = (*AppError)(nil)
 
 func (e AppError) GetCode() string {
 	return e.Code
+}
+
+func (e AppError) GetStatus() int {
+	return e.Status
 }
 
 func (e AppError) GetMessage() string {
@@ -61,6 +66,9 @@ func (e *AppError) AddError(err error) {
 
 func (e AppError) Error() string {
 	s := e.Code
+	if e.Status != 0 {
+		s += fmt.Sprintf("(%v)", e.Status)
+	}
 	if e.Message != "" {
 		s += ": " + e.Message
 	}
@@ -86,6 +94,7 @@ func (e AppError) MarshalJSON() ([]byte, error) {
 	e.Errors = nil
 	if !e.Public {
 		e.Code = "app_error"
+		e.Status = 0
 		e.Message = "An internal application error occurred"
 		e.Data = nil
 	}
@@ -95,7 +104,8 @@ func (e AppError) MarshalJSON() ([]byte, error) {
 
 // Create a new error. only required argument is string.
 // Other arguments may be: a string to set the message, a bool to set
-// the error to public, a slice of errors to set the nested errors,
+// the error to public, an int to set the status,
+// a slice of errors to set the nested errors,
 // and an arbitrary interface{} to set the error.Data.
 func New(code string, args ...interface{}) *AppError {
 	err := &AppError{
@@ -103,7 +113,9 @@ func New(code string, args ...interface{}) *AppError {
 	}
 
 	for _, arg := range args {
-		if str, ok := arg.(string); ok {
+		if status, ok := arg.(int); ok {
+			err.Status = status
+		} else if str, ok := arg.(string); ok {
 			err.Message = str
 		} else if flag, ok := arg.(bool); ok {
 			err.Public = flag
@@ -125,30 +137,13 @@ func New(code string, args ...interface{}) *AppError {
 // If you do not supply a message, the original error will be converted to string
 // and used as the message.
 func WrapError(err error, code string, args ...interface{}) *AppError {
-	wrap := &AppError{
-		Code: code,
-	}
-
+	wrap := New(code, args...)
+	wrap.SetErrors(nil)
 	wrap.AddError(err)
 
-	msg := ""
-
-	for _, arg := range args {
-		if str, ok := arg.(string); ok {
-			msg = str
-		} else if flag, ok := arg.(bool); ok {
-			wrap.Public = flag
-		} else {
-			wrap.Data = arg
-		}
-	}
-
-	if wrap.Public {
-		// If it is a public error, do not include the  original error message,
-		// even if no custom message was supplied.
-		wrap.Message = msg
-	} else {
+	if !wrap.Public {
 		// For private errors, merge the custom message (if any) and the error message.
+		msg := wrap.Message
 		if msg != "" {
 			msg += ": "
 		}
@@ -158,9 +153,16 @@ func WrapError(err error, code string, args ...interface{}) *AppError {
 	return wrap
 }
 
-func IsError(err error, code string) bool {
+func IsCode(err error, code string) bool {
 	if appErr, ok := err.(Error); ok {
 		return appErr.GetCode() == code
 	}
 	return err.Error() == code
+}
+
+func IsStatus(err error, status int) bool {
+	if appErr, ok := err.(Error); ok {
+		return appErr.GetStatus() == status
+	}
+	return false
 }

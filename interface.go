@@ -2,6 +2,7 @@ package apperror
 
 type Error interface {
 	GetCode() string
+	GetStatus() int
 	GetMessage() string
 	GetData() interface{}
 
@@ -12,4 +13,5 @@ type Error interface {
 	AddError(err error)
 
 	Error() string
+	ToJson() []byte
 }

@@ -25,6 +25,22 @@ var _ = Describe("Apperror", func() {
 		Expect(err2.Errors[2].Error()).To(Equal("nested2"))
 	})
 
+	It("Should .Error() with just a code", func() {
+		Expect(AppError{Code: "code"}.Error()).To(Equal("code"))
+	})
+
+	It("Should .Error() with code and status", func() {
+		Expect(AppError{Code: "code", Status: 100}.Error()).To(Equal("code(100)"))
+	})
+
+	It("Should .Error() with code, status and message", func() {
+		Expect(AppError{Code: "code", Status: 100, Message: "msg"}.Error()).To(Equal("code(100): msg"))
+	})
+
+	It("Should .New() with status", func() {
+		Expect(New("code", 100).Status).To(Equal(100))
+	})
+
 	It("Should .New() with message", func() {
 		Expect(New("code", "msg").Message).To(Equal("msg"))
 	})
@@ -34,20 +50,21 @@ var _ = Describe("Apperror", func() {
 	})
 
 	It("Should .New() with data", func() {
-		Expect(New("code", 444).Data).To(Equal(444))
+		Expect(New("code", []string{}).Data).To(Equal([]string{}))
 	})
 
 	It("Should .New() with errors", func() {
 		Expect(New("code", []error{errors.New("nested")}).Errors[0]).To(Equal(errors.New("nested")))
 	})
 
-	It("Should .New() with message, flag, data and errors", func() {
-		err := New("code", "msg", true, 11, []error{errors.New("nested")})
+	It("Should .New() with status, message, flag, data and errors", func() {
+		err := New("code", 100, "msg", true, []string{}, []error{errors.New("nested")})
 		Expect(err).To(Equal(&AppError{
 			Code:    "code",
+			Status:  100,
 			Message: "msg",
 			Public:  true,
-			Data:    11,
+			Data:    []string{},
 			Errors:  []error{errors.New("nested")},
 		}))
 	})
@@ -80,20 +97,22 @@ var _ = Describe("Apperror", func() {
 	})
 
 	It("Should .WrapError with code and data", func() {
-		err := WrapError(errors.New("nested"), "err", 55)
+		err := WrapError(errors.New("nested"), "err", []string{})
 		Expect(err).To(Equal(&AppError{
 			Code:    "err",
 			Message: "nested",
-			Data:    55,
+			Data:    []string{},
 			Errors:  []error{errors.New("nested")},
 		}))
 	})
 
-	It("Should .WrapError with code and message and public", func() {
-		err := WrapError(errors.New("nested"), "err", "message", true)
+	It("Should .WrapError with code, status, data, message and public", func() {
+		err := WrapError(errors.New("nested"), "err", 100, "message", true, []string{})
 		Expect(err).To(Equal(&AppError{
 			Code:    "err",
+			Status:  100,
 			Message: "message",
+			Data:    []string{},
 			Public:  true,
 			Errors:  []error{errors.New("nested")},
 		}))
