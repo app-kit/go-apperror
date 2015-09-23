@@ -91,7 +91,7 @@ func handleError(err apperror.Error) {
 
 ## Reference
 
-* apperror.New()
+### apperror.New()
 
 Create a new error.
 
@@ -102,7 +102,7 @@ Create a new error.
 err := apperror.New(code string, [status int,] [message string,] [data interface{}, ] [isPublic bool,] [nestedErrors []error])
 ```
 
-* apperror.Wrap()
+### apperror.Wrap()
 
 Wrap an error.
 
@@ -113,7 +113,7 @@ Wrap an error.
  apperror.Wrap(originalError error, code string, [status int,] [message string,] [data interface{}, ] [isPublic bool,]) apperror.Error
 ```
 
-* apperror.IsCode
+### apperror.IsCode
 
 Check if an error has a code.
 
@@ -121,7 +121,7 @@ Check if an error has a code.
 apperror.IsCode(err error, code string) bool
 ```
 
-* apperror.IsStatus
+### apperror.IsStatus
 
 Check if an error has a status.
 
@@ -129,7 +129,7 @@ Check if an error has a status.
 apperror.IsStatus(err error, status int) bool
 ```
 
-* Manually creating errors.
+### Manually creating errors.
 
 You can also manually create the error.
 
