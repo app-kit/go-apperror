@@ -136,7 +136,7 @@ func New(code string, args ...interface{}) *AppError {
 // to set as data.
 // If you do not supply a message, the original error will be converted to string
 // and used as the message.
-func WrapError(err error, code string, args ...interface{}) *AppError {
+func Wrap(err error, code string, args ...interface{}) *AppError {
 	wrap := New(code, args...)
 	wrap.SetErrors(nil)
 	wrap.AddError(err)

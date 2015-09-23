@@ -70,7 +70,7 @@ var _ = Describe("Apperror", func() {
 	})
 
 	It("Should .WrapError with just a code", func() {
-		err := WrapError(errors.New("nested"), "err")
+		err := Wrap(errors.New("nested"), "err")
 		Expect(err).To(Equal(&AppError{
 			Code:    "err",
 			Message: "nested",
@@ -79,7 +79,7 @@ var _ = Describe("Apperror", func() {
 	})
 
 	It("Should .WrapError with code and message", func() {
-		err := WrapError(errors.New("nested"), "err", "message")
+		err := Wrap(errors.New("nested"), "err", "message")
 		Expect(err).To(Equal(&AppError{
 			Code:    "err",
 			Message: "message: nested",
@@ -88,7 +88,7 @@ var _ = Describe("Apperror", func() {
 	})
 
 	It("Should .WrapError with code and public", func() {
-		err := WrapError(errors.New("nested"), "err", true)
+		err := Wrap(errors.New("nested"), "err", true)
 		Expect(err).To(Equal(&AppError{
 			Code:   "err",
 			Public: true,
@@ -97,7 +97,7 @@ var _ = Describe("Apperror", func() {
 	})
 
 	It("Should .WrapError with code and data", func() {
-		err := WrapError(errors.New("nested"), "err", []string{})
+		err := Wrap(errors.New("nested"), "err", []string{})
 		Expect(err).To(Equal(&AppError{
 			Code:    "err",
 			Message: "nested",
@@ -107,7 +107,7 @@ var _ = Describe("Apperror", func() {
 	})
 
 	It("Should .WrapError with code, status, data, message and public", func() {
-		err := WrapError(errors.New("nested"), "err", 100, "message", true, []string{})
+		err := Wrap(errors.New("nested"), "err", 100, "message", true, []string{})
 		Expect(err).To(Equal(&AppError{
 			Code:    "err",
 			Status:  100,
@@ -116,5 +116,17 @@ var _ = Describe("Apperror", func() {
 			Public:  true,
 			Errors:  []error{errors.New("nested")},
 		}))
+	})
+
+	It("Should .IsCode() with plain error", func() {
+		Expect(IsCode(errors.New("err"), "err")).To(BeTrue())
+	})
+
+	It("Should .IsCode() with AppError", func() {
+		Expect(IsCode(New("err"), "err")).To(BeTrue())
+	})
+
+	It("Should .IsStatus() with AppError", func() {
+		Expect(IsStatus(New("err", 100), 100)).To(BeTrue())
 	})
 })
