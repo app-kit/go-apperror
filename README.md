@@ -5,7 +5,7 @@ Go error implementation for applications that supports nested errors.
 Go s error  implementation is rather simplistic,  and leaves a lot to be desired
 for applications that require more complex errors.
 
-This package provides an `Error` interface and and an `AppError` implementation to 
+This package provides an `Error` interface and and an `apperror.Err` implementation to 
 provide rich errors, both internally and to a possibly public frontend.
 
 The Error interface of course implements the go Error interface,
@@ -134,7 +134,7 @@ apperror.IsStatus(err error, status int) bool
 You can also manually create the error.
 
 ```go
-err := &apperror.AppError{
+err := &apperror.Err{
 	Code: "code",
 	Status: 111,
 	Message: "msg",
@@ -147,7 +147,7 @@ return err
 
 ## Marshal
 
-AppError implements the json Marshal interface to provide more advanced marshalling for 
+Err implements the json Marshal interface to provide more advanced marshalling for 
 public errors:
 
 The marshaled error will not include nested errors.
@@ -157,5 +157,5 @@ the error will just contain the Code "app_error" and a generic error message.
 
 ## Tipps
 
-* Always use the apperror.Error interface in function signatures, not the implementation apperror.AppError. This allows you to use different implementations if appropriate.
+* Always use the apperror.Error interface in function signatures, not the implementation apperror.Err. This allows you to use different implementations if appropriate.
 * Set errors intended for end users to Public, and check to only show public errors.

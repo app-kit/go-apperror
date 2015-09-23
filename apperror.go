@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-type AppError struct {
+type Err struct {
 	Code    string      `json:"code,omitempty"`
 	Status  int         `json:"status,omitempty"`
 	Message string      `json:"title,omitempty"`
@@ -15,39 +15,39 @@ type AppError struct {
 }
 
 // Ensure error implements the error interface.
-var _ Error = (*AppError)(nil)
+var _ Error = (*Err)(nil)
 
-func (e AppError) GetCode() string {
+func (e Err) GetCode() string {
 	return e.Code
 }
 
-func (e AppError) GetStatus() int {
+func (e Err) GetStatus() int {
 	return e.Status
 }
 
-func (e AppError) GetMessage() string {
+func (e Err) GetMessage() string {
 	return e.Message
 }
 
-func (e AppError) GetData() interface{} {
+func (e Err) GetData() interface{} {
 	return e.Data
 }
 
-func (e AppError) IsPublic() bool {
+func (e Err) IsPublic() bool {
 	return e.Public
 }
 
-func (e AppError) GetErrors() []error {
+func (e Err) GetErrors() []error {
 	return e.Errors
 }
 
-func (e *AppError) SetErrors(errs []error) {
+func (e *Err) SetErrors(errs []error) {
 	for _, err := range errs {
 		e.AddError(err)
 	}
 }
 
-func (e *AppError) AddError(err error) {
+func (e *Err) AddError(err error) {
 	if appError, ok := err.(Error); ok {
 		// If the error implements the Error interface,
 		// merge the nested errors.
@@ -55,7 +55,6 @@ func (e *AppError) AddError(err error) {
 		appError.SetErrors(nil)
 
 		e.Errors = append(e.Errors, appError)
-		fmt.Printf("errs: %v\n", errs)
 		if len(errs) > 0 {
 			e.Errors = append(e.Errors, errs...)
 		}
@@ -64,7 +63,7 @@ func (e *AppError) AddError(err error) {
 	}
 }
 
-func (e AppError) Error() string {
+func (e Err) Error() string {
 	s := e.Code
 	if e.Status != 0 {
 		s += fmt.Sprintf("(%v)", e.Status)
@@ -80,7 +79,7 @@ func (e AppError) Error() string {
 	return s
 }
 
-func (e AppError) ToJson() []byte {
+func (e Err) ToJson() []byte {
 	js, err := e.MarshalJSON()
 	if err != nil {
 		return []byte(`{"code": "error_marshal_failed", "message": "Could not convert the returned error to json."}`)
@@ -90,7 +89,7 @@ func (e AppError) ToJson() []byte {
 }
 
 // Implement the json Marshaler interface.
-func (e AppError) MarshalJSON() ([]byte, error) {
+func (e Err) MarshalJSON() ([]byte, error) {
 	e.Errors = nil
 	if !e.Public {
 		e.Code = "app_error"
@@ -107,8 +106,8 @@ func (e AppError) MarshalJSON() ([]byte, error) {
 // the error to public, an int to set the status,
 // a slice of errors to set the nested errors,
 // and an arbitrary interface{} to set the error.Data.
-func New(code string, args ...interface{}) *AppError {
-	err := &AppError{
+func New(code string, args ...interface{}) *Err {
+	err := &Err{
 		Code: code,
 	}
 
@@ -129,14 +128,14 @@ func New(code string, args ...interface{}) *AppError {
 	return err
 }
 
-// Wrap an error with an AppError.
+// Wrap an error with an Err.
 // The required arguments are the error to wrap an an error code.
 // Additionally you can supply another string argument as the message,
 // a bool to set if the error is public, and an arbitrary interface{} value
 // to set as data.
 // If you do not supply a message, the original error will be converted to string
 // and used as the message.
-func Wrap(err error, code string, args ...interface{}) *AppError {
+func Wrap(err error, code string, args ...interface{}) *Err {
 	wrap := New(code, args...)
 	wrap.SetErrors(nil)
 	wrap.AddError(err)
