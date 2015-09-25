@@ -79,26 +79,33 @@ func (e Err) Error() string {
 	return s
 }
 
-func (e Err) ToJson() []byte {
-	js, err := e.MarshalJSON()
-	if err != nil {
-		return []byte(`{"code": "error_marshal_failed", "message": "Could not convert the returned error to json."}`)
-	}
-
-	return js
-}
-
 // Implement the json Marshaler interface.
 func (e Err) MarshalJSON() ([]byte, error) {
-	e.Errors = nil
+	var data map[string]interface{}
+
 	if !e.Public {
-		e.Code = "app_error"
-		e.Status = 0
-		e.Message = "An internal application error occurred"
-		e.Data = nil
+		data = map[string]interface{}{
+			"code":    "app_error",
+			"message": "An internal application error occurred",
+		}
+	} else {
+		data = make(map[string]interface{})
+
+		if e.Code != "" {
+			data["code"] = e.Code
+		}
+		if e.Status != 0 {
+			data["status"] = e.Status
+		}
+		if e.Message != "" {
+			data["message"] = e.Message
+		}
+		if e.Data != nil {
+			data["data"] = e.Data
+		}
 	}
 
-	return json.Marshal(e)
+	return json.Marshal(data)
 }
 
 // Create a new error. only required argument is string.
@@ -107,6 +114,15 @@ func (e Err) MarshalJSON() ([]byte, error) {
 // a slice of errors to set the nested errors,
 // and an arbitrary interface{} to set the error.Data.
 func New(code string, args ...interface{}) *Err {
+	// First, check if any of the supplied arguments is a plain error.
+	// If so, return a wrapped error.
+	for i, arg := range args {
+		if err, ok := arg.(error); ok {
+			newArgs := append(args[:i], args[i+1:]...)
+			return Wrap(err, code, newArgs...)
+		}
+	}
+
 	err := &Err{
 		Code: code,
 	}

@@ -13,5 +13,4 @@ type Error interface {
 	AddError(err error)
 
 	Error() string
-	ToJson() []byte
 }
